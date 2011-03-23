@@ -1,0 +1,19 @@
+<plugin name='jpa' version='0.1.9' grailsVersion='1.1 &gt; *'>
+  <author>Mingfai Ma</author>
+  <authorEmail>mingfai.ma@gmail.com</authorEmail>
+  <title>Provide standalone JPA functions without GORM</title>
+  <description>\
+Provide standalone JPA functions without GORM, optional Groovy-style JPA APIs, Validator (JSR 303 draft) and JPA Unit Test supports. See documentation.
+</description>
+  <documentation>http://grails.org/JPA+Plugin</documentation>
+  <resources>
+    <resource>BootStrap</resource>
+    <resource>Config</resource>
+    <resource>DataSource</resource>
+    <resource>org.grails.plugins.jpa.JpaFilters</resource>
+    <resource>spring.resources</resource>
+    <resource>UrlMappings</resource>
+    <resource>org.grails.plugins.jpa.JpaService</resource>
+  </resources>
+  <dependencies />
+</plugin>
