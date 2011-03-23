@@ -1,0 +1,25 @@
+## ACLGAE ##
+
+This project is a testdrive app to get s2-core and acl running on the Google App Engine
+Since there needs to be another datastore than grails uses per default, I have tried to integrate JPA into the plugins.
+
+WARNING:
+Especially the acl bit is quite messy, I am aware of this, I sort of changed the whole AclService to be JPA only which would not be a great idea for a publisj ;)
+
+Since I amjust traing to get a feeling for spring security, grails plugins, JPA and GAE this is currently my best shot
+
+Any questins or suggestions can be posted to the thread in the grails userlist on nabble
+
+###
+
+The base project is the ACLGAE one
+
+It uses the two plugin projects as in place plugins.
+In order to run, just run the ACLGAE project
+
+###
+
+
+
+#
+
