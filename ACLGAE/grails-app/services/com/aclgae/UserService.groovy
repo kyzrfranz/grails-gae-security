@@ -46,17 +46,16 @@ class UserService {
 		
 		assert user != null
 		
-		
 		UserRole.create user, roleUser
 		
-		addPermission user, currentUser.username, BasePermission.ADMINISTRATION
-		println "adding admin rights to "+user+" for "+currentUser.username
+		addPermission user, springSecurityService.authentication.name, BasePermission.ADMINISTRATION
+		println "adding admin rights to "+user+" for "+springSecurityService.authentication.name
 		//addPermission user, 'ROLE_USER', BasePermission.READ
 		
 		user
 	}
 	
-	@PreAuthorize("hasPermission(#id, 'com.aclgae.User', admin)")
+	@PreAuthorize("hasPermission(#id, 'com.aclgae.User', admin) ")
 	public User get(long id){
 		User.get(id)	
 	}

@@ -1,8 +1,8 @@
-<!-- Indices written at Wed, 23 Mar 2011 17:19:58 UTC -->
+<!-- Indices written at Thu, 24 Mar 2011 11:12:49 UTC -->
 
 <datastore-indexes>
 
-    <!-- Used 1 time in query history -->
+    <!-- Used 2 times in query history -->
     <datastore-index kind="AclEntry" ancestor="false" source="auto">
         <property name="aclOiId" direction="asc"/>
         <property name="aceOrder" direction="asc"/>
