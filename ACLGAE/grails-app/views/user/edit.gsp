@@ -30,6 +30,33 @@
                         
                             <tr class="prop">
                                 <td valign="top" class="name">
+                                    <label for="username">Username:</label>
+                                </td>
+                                <td valign="top" class="value ${hasErrors(bean:userInstance,field:'username','errors')}">
+                                    <g:textField name="username" value="${userInstance?.username}" />
+                                </td>
+                            </tr> 
+                        
+                            <tr class="prop">
+                                <td valign="top" class="name">
+                                    <label for="password">Password:</label>
+                                </td>
+                                <td valign="top" class="value ${hasErrors(bean:userInstance,field:'password','errors')}">
+                                    <g:textField name="password" value="${userInstance?.password}" />
+                                </td>
+                            </tr> 
+                        
+                            <tr class="prop">
+                                <td valign="top" class="name">
+                                    <label for="passwordExpired">Password Expired:</label>
+                                </td>
+                                <td valign="top" class="value ${hasErrors(bean:userInstance,field:'passwordExpired','errors')}">
+                                    <g:checkBox name="passwordExpired" value="${userInstance?.passwordExpired}" />
+                                </td>
+                            </tr> 
+                            
+                            <tr class="prop">
+                                <td valign="top" class="name">
                                     <label for="accountExpired">Account Expired:</label>
                                 </td>
                                 <td valign="top" class="value ${hasErrors(bean:userInstance,field:'accountExpired','errors')}">
@@ -54,33 +81,18 @@
                                     <g:checkBox name="enabled" value="${userInstance?.enabled}" />
                                 </td>
                             </tr> 
-                        
-                            <tr class="prop">
+                            
+                            
+                        	 <tr class="prop">
                                 <td valign="top" class="name">
-                                    <label for="password">Password:</label>
+                                    <label for="enabled">Add Reading Permission for:</label>
+                                    <g:textField name="addRead" />
                                 </td>
-                                <td valign="top" class="value ${hasErrors(bean:userInstance,field:'password','errors')}">
-                                    <g:textField name="password" value="${userInstance?.password}" />
+                                <td valign="top">
                                 </td>
                             </tr> 
-                        
-                            <tr class="prop">
-                                <td valign="top" class="name">
-                                    <label for="passwordExpired">Password Expired:</label>
-                                </td>
-                                <td valign="top" class="value ${hasErrors(bean:userInstance,field:'passwordExpired','errors')}">
-                                    <g:checkBox name="passwordExpired" value="${userInstance?.passwordExpired}" />
-                                </td>
-                            </tr> 
-                        
-                            <tr class="prop">
-                                <td valign="top" class="name">
-                                    <label for="username">Username:</label>
-                                </td>
-                                <td valign="top" class="value ${hasErrors(bean:userInstance,field:'username','errors')}">
-                                    <g:textField name="username" value="${userInstance?.username}" />
-                                </td>
-                            </tr> 
+                            
+                            
                         
                         </tbody>
                     </table>

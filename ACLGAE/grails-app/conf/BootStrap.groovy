@@ -7,6 +7,8 @@ import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.transaction.support.TransactionCallback
 import org.apache.commons.lang.StringUtils
+import org.springframework.security.acls.domain.BasePermission
+
 
 class BootStrap {
 	
@@ -119,6 +121,9 @@ class BootStrap {
 		   if(userInstance) {
 			   //println "adding permission to user "+roleUser+" for "+userInstance.id
 			   UserRole.create userInstance, roleUser
+			   //loginAsAdmin()
+			   //aclUtilService.addPermission userInstance, userInstance.username, BasePermission.ADMINISTRATION
+			   //aclUtilService.addPermission userInstance, "ROLE_ADMIN", BasePermission.ADMINISTRATION
 		   }
 		   
 		   if(id == 1){

@@ -1,6 +1,7 @@
 package com.aclgae
 
 import grails.plugins.springsecurity.Secured
+import org.springframework.security.acls.domain.BasePermission
 
 
 class UserController {
@@ -13,10 +14,10 @@ class UserController {
     // the delete, save and update actions only accept POST requests
     static allowedMethods = [delete:'POST', save:'POST', update:'POST']
 
-	@Secured(['ROLE_ADMIN'])
     def list = {
         params.max = Math.min( params.max ? params.max.toInteger() : 10,  100)
-        [ userInstanceList: User.list( params ), userInstanceTotal: User.count() ]
+		def users = userService.list( params )
+        [ userInstanceList: users, userInstanceTotal: 10 ]
     }
 
     def show = {
@@ -30,11 +31,11 @@ class UserController {
     }
 
     def delete = {
+		def userInstance = User.get( params.id )
 		User.withTransaction {
-	        def userInstance = User.get( params.id )
 	        if(userInstance) {
 	            try {
-	                userInstance.delete(flush:true)
+	                userInstance.delete()
 	                flash.message = "User ${params.id} deleted"
 	                redirect(action:list)
 	            }
@@ -77,6 +78,16 @@ class UserController {
             return [ userInstance : userInstance ]
         }
     }
+	
+	def addReading = {
+		def userInstance = userService.get(params.id.toLong())
+		userService.addPermission userInstance, params.username, BasePermission.READ
+	}
+	
+	def removeReading = {
+		def userInstance = userService.get(params.id.toLong())
+		userService.deletePermission userInstance, params.username, BasePermission.READ
+	}
 
     def update = {
 		User.withTransaction {
@@ -116,9 +127,6 @@ class UserController {
 
     def save = {
         def userInstance = new User(params)
-		userInstance.password = springSecurityService.encodePassword(params.password)
-		
-		
 		userInstance = userService.create(userInstance)
 			
 			

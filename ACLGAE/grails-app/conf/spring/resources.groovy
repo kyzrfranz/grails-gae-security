@@ -7,4 +7,5 @@ beans = {
 		permissionFactory = ref('aclPermissionFactory')
 		auditLogger = ref('aclAuditLogger')
 	}
+	objectIdentityRetrievalStrategy(org.codehaus.groovy.grails.plugins.springsecurity.acl.JPAObjectIdentityRetrievalStrategy)
 }

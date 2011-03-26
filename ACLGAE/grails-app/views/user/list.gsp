@@ -7,9 +7,10 @@
     </head>
     <body>
         <div class="nav">
-            <span class="menuButton"><a class="home" href="${resource(dir:'')}">Home</a></span>
+            <span class="menuButton"><a class="home" href="${resource(dir:'/')}">Home</a></span>
             <span class="menuButton"><g:link class="create" action="create">New User</g:link></span>
-             <span class="menuButton"><g:link class="deleteAll" action="deleteAll">Delete All</g:link></span>
+            <span class="menuButton"><g:link class="deleteAll" action="deleteAll">Delete All</g:link></span>
+            <span class="menuButton"><a href="${resource(dir:'/logout')}">Log Out</a></span>
         </div>
         <div class="body">
             <h1>User List</h1>

@@ -1,5 +1,8 @@
 package com.aclgae
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.acls.domain.BasePermission
@@ -12,9 +15,14 @@ class UserService {
 	static transactional = false
 	
 	def aclPermissionFactory
+	def authenticationService
+	def springSecurityService
 	def aclService
 	def aclUtilService
-	def springSecurityService
+	def objectIdentityRetrievalStrategy
+	def sessionFactory
+	def jpaTemplate
+	def transactionTemplate
 
     @PreAuthorize("hasPermission(#user, admin)")
 	void addPermission(User user, String username, Permission permission) {
@@ -32,31 +40,54 @@ class UserService {
 		def currentUser = User.get(springSecurityService.principal.id)
 		
 		def roleUser = Role.findWhere(authority:'ROLE_USER')
-		
-		def user = new User(username: tmpUser.username, enabled: true,
-			password: springSecurityService.encodePassword(tmpUser.password))
-			
-		println "USER IS:"+ user	
+		def userInstance
 		
 		User.withTransaction{
-			user.save(flush:true)
+			def pwd = springSecurityService.encodePassword(tmpUser.password)
+			userInstance = new User(username: tmpUser.username, enabled: true,
+			password: pwd).save(flush:true)
+			
+			   if(userInstance) {
+				   try {
+					   //println "creating user "+id
+					   userInstance.save()
+				   }
+				   catch(org.springframework.dao.DataIntegrityViolationException e) {
+				   }
+			   }
 		}
 		
-		println "NEW USER IS:"+ user
+		if(userInstance) {
+			//println "adding permission to user "+roleUser+" for "+userInstance.id
+			UserRole.create userInstance, roleUser
+		}
 		
-		assert user != null
+		assert userInstance != null
 		
-		UserRole.create user, roleUser
+		addPermission userInstance, userInstance.username, BasePermission.ADMINISTRATION
+		addPermission userInstance, "ROLE_ADMIN", BasePermission.ADMINISTRATION
 		
-		addPermission user, springSecurityService.authentication.name, BasePermission.ADMINISTRATION
-		println "adding admin rights to "+user+" for "+springSecurityService.authentication.name
-		//addPermission user, 'ROLE_USER', BasePermission.READ
+		println "adding admin rights to "+userInstance.username+" for "+userInstance.username
 		
-		user
+		userInstance
 	}
 	
-	@PreAuthorize("hasPermission(#id, 'com.aclgae.User', admin) ")
+	@PreAuthorize("hasPermission(#id, 'com.aclgae.User', admin)")
 	public User get(long id){
 		User.get(id)	
+	}
+	
+	public User getByUsername(String username){
+		User.findByUsername(username)
+	}
+	
+	@PostFilter("hasPermission(filterObject, admin) or hasPermission(filterObject, read)")
+	public List<User> list(Map params){
+		def retUsers = []
+		def users = User.list()
+		
+		users.each{retUsers << it}
+		
+		retUsers
 	}
 }

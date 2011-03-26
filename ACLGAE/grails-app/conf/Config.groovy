@@ -89,7 +89,7 @@ log4j = {
     warn   'org.mortbay.log'
 	info "org.springframework.security.core"
 	
-	//debug 'org.springframework.security' 
+//	debug 'org.springframework.security' 
 	
 	/* 'grails.app',
 	'grails.app.task',
