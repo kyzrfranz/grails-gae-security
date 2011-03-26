@@ -25,8 +25,6 @@ class AclClass {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id
-	
-	Long objectId
 	String className
 
 	@Override

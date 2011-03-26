@@ -59,7 +59,7 @@ class JPAAclLookupStrategy implements LookupStrategy {
 	 * 	java.util.List, java.util.List)
 	 */
 	Map<ObjectIdentity, Acl> readAclsById(List<ObjectIdentity> objects, List<Sid> sids) {
-		println "READ ACLS BY ID (LOOKUP)"
+//		println "READ ACLS BY ID (LOOKUP)"
 		Map<ObjectIdentity, Acl> result = [:]
 		Set<ObjectIdentity> currentBatchToLoad = []
 
@@ -107,10 +107,10 @@ class JPAAclLookupStrategy implements LookupStrategy {
 			}
 		}
 		
-		println "READ ACLS BY ID (LOOKUP): "
-		for ( e in result ) {
-		    println "Object Id: "+e.key.identifier+": "+e.value
-		}
+//		println "READ ACLS BY ID (LOOKUP): "
+//		for ( e in result ) {
+//		    println "Object Id: "+e.key.identifier+": "+e.value
+//		}
 		
 		return result
 	}
@@ -118,7 +118,7 @@ class JPAAclLookupStrategy implements LookupStrategy {
 	protected Map<ObjectIdentity, Acl> lookupObjectIdentities(
 			Collection<ObjectIdentity> objectIdentities, List<Sid> sids) {
 
-		println "LOOKUP OBJECT IDENTITIES"
+//		println "LOOKUP OBJECT IDENTITIES"
 		
 		Assert.notEmpty objectIdentities, 'Must provide identities to lookup'
 
@@ -153,7 +153,7 @@ class JPAAclLookupStrategy implements LookupStrategy {
 			result[converted.objectIdentity] = converted
 		}
 
-		println "FOUND OBJECT IDENTITIES: "+result
+//		println "FOUND OBJECT IDENTITIES: "+result
 		
 		return result
 		
@@ -162,7 +162,7 @@ class JPAAclLookupStrategy implements LookupStrategy {
 	protected Map<AclObjectIdentity, List<AclEntry>> findAcls(
 			List<AclObjectIdentity> aclObjectIdentities) {
 
-		println "FIND ACLS"
+//		println "FIND ACLS"
 		List<AclEntry> entries
 		if (aclObjectIdentities) {
 			def jpa = getJpaTemplate()
@@ -189,14 +189,14 @@ class JPAAclLookupStrategy implements LookupStrategy {
 			insertInto map, oid, entry
 			//map[oid] << entry
 		}
-		println "FOUND ACL ENTRIES: "+map
+//		println "FOUND ACL ENTRIES: "+map
 		
 		return map
 	}
 
 	protected AclImpl convert(Map<Serializable, Acl> inputMap, Serializable currentIdentity) {
 		
-		println "CONVERT"
+//		println "CONVERT"
 		Assert.notEmpty inputMap, 'InputMap required'
 		Assert.notNull currentIdentity, 'CurrentIdentity required'
 
@@ -204,7 +204,7 @@ class JPAAclLookupStrategy implements LookupStrategy {
 		Acl inputAcl = inputMap[currentIdentity]
 		Assert.isInstanceOf AclImpl, inputAcl, 'The inputMap contained a non-AclImpl'
 		
-		println "INPUT ACL: "+inputAcl
+//		println "INPUT ACL: "+inputAcl
 		
 		Acl parent = inputAcl.parentAcl
 		if (parent instanceof StubAclParent) {
@@ -222,7 +222,7 @@ class JPAAclLookupStrategy implements LookupStrategy {
 			acesNew << ace
 		}
 		result.@aces = acesNew
-		println "CONVERTED: "+result
+//		println "CONVERTED: "+result
 		
 		return result
 	}
@@ -231,17 +231,13 @@ class JPAAclLookupStrategy implements LookupStrategy {
 	Map<AclObjectIdentity, List<AclEntry>> aclObjectIdentityMap,
 	Map<Serializable, Acl> acls, List<Sid> sids) {
 
-		println "CONVERT ENTRIES"
-println "MAP POPAP "+aclObjectIdentityMap
+//		println "CONVERT ENTRIES"
 		List<AclObjectIdentity> parents = []
 		
 		for ( e in aclObjectIdentityMap ) {
 			def aclEntries = e.value
 			def aclObjectIdentity = e.key
 		
-			println "MAPARG OI "+aclObjectIdentity
-			println "MAPARG ENTRIES "+aclEntries
-			
 			createAcl acls, aclObjectIdentity, aclEntries
 
 			if (aclObjectIdentity.parentId) {
@@ -264,14 +260,14 @@ println "MAP POPAP "+aclObjectIdentityMap
 			}
 		}
 
-		println "CONVERTED ENTRIES: "+parents
+//		println "CONVERTED ENTRIES: "+parents
 		return parents
 	}
 
 	protected void createAcl(Map<Serializable, Acl> acls, AclObjectIdentity aclObjectIdentity,
 			List<AclEntry> entries) {
 
-			println "CREATE ACL"
+//			println "CREATE ACL"
 			Serializable id = aclObjectIdentity.id
 			
 					// If we already have an ACL for this ID, just create the ACE
@@ -295,43 +291,40 @@ println "MAP POPAP "+aclObjectIdentityMap
 			
 						acl = new AclImpl(objectIdentity, id, aclAuthorizationStrategy, auditLogger,
 								parentAcl, null, aclObjectIdentity.entriesInheriting, owner)
+						println "HAVE AN ACL "+acl
 						acls[id] = acl
 					}
 					
-					println "CREATED ACLS "+acls
-					println "ACE ENTRIES "+entries
-			
 					List aces = acl.@aces
 					for (AclEntry entry in entries) {
 						// Add an extra ACE to the ACL (ORDER BY maintains the ACE list order)
 						// It is permissable to have no ACEs in an ACL
-						println "TRYING TO CREATE ACE"
-						String aceSid = entry.sidId
-						println "ACE SID: "+aceSid
+						def sid = getJpaTemplate().find(AclSid.class, entry.sidId.toLong())
+						String aceSid = sid.sid
 						if (aceSid) {
-							Sid recipient = getJpaTemplate().find(AclSid.class, aceSid.toLong()) ?
+							Sid recipient = sid.principal?
 									new PrincipalSid(aceSid) :
 									new GrantedAuthoritySid(aceSid)
-							println "RECIPIENT : "+recipient
+									
+							println "SID FOUND: "+recipient
+							
+							
 							Permission permission = permissionFactory.buildFromMask(entry.mask)
 							AccessControlEntryImpl ace = new AccessControlEntryImpl(
 									entry.id, acl, recipient, permission,
 									entry.granting, entry.auditSuccess, entry.auditFailure)
-							println "NEW ACE  : "+ace
 							// Add the ACE if it doesn't already exist in the ACL.aces field
 							if (!aces.contains(ace)) {
 								aces << ace
 							}
 						}
 					}
-					println "CREATED ACEs "+aces
-
-		
+//					println "CREATED ACEs "+aces
 	}
 
 	protected Class<?> lookupClass(String className) {
 		// workaround for Class.forName() not working in tests
-		println "LOOKUP CLASS"
+//		println "LOOKUP CLASS"
 		
 		return Class.forName(className, true, Thread.currentThread().contextClassLoader)
 	}
@@ -339,8 +332,17 @@ println "MAP POPAP "+aclObjectIdentityMap
 	protected void lookupParents(Map<Serializable, Acl> acls,
 			Collection<AclObjectIdentity> findNow, List<Sid> sids) {
 			
-			println "LOOKUP PARENTS"
+//			println "LOOKUP PARENTS"
+			Assert.notNull acls, 'ACLs are required'
+			Assert.notEmpty findNow, 'Items to find now required'
+	
+			Map<AclObjectIdentity, List<AclEntry>> aclObjectIdentityMap = findAcls(findNow as List)
+			List<AclObjectIdentity> parents = convertEntries(aclObjectIdentityMap, acls, sids)
+			if (parents) {
+				lookupParents acls, parents, sids
+			}
 			
+//			println "PARENTS "+parents
 	}
 			
 			

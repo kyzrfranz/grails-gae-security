@@ -58,12 +58,12 @@ class JPAUserDetailsService implements GrailsUserDetailsService {
 				else{
 					
 					user = user[0]
-					
 					//def roles = [new GrantedAuthorityImpl("ROLE_USER")];
 					Collection<GrantedAuthority> authorities = loadAuthorities(user, username, loadRoles)
 						
 					def authUser = createUserDetails(user, authorities)
-					
+					println "PASSWORD FOUND"+authUser.password
+					println authUser
 					authUser
 				}
 				

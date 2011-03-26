@@ -34,7 +34,7 @@ class GrailsUser extends User {
 				accountNonLocked, authorities)
 		_id = id
 	}
-
+		 
 	/**
 	 * Get the id.
 	 * @return  the id

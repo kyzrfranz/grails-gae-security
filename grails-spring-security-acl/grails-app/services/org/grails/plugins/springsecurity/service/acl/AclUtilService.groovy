@@ -133,6 +133,7 @@ class AclUtilService {
 
 		acl.entries.eachWithIndex { entry, i ->
 			if (entry.sid.equals(sid) && entry.permission.equals(permission)) {
+				println "DELETING "+entry+", "+i
 				acl.deleteAce i
 			}
 		}

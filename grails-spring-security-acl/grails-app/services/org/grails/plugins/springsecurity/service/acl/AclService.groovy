@@ -16,6 +16,7 @@ package org.grails.plugins.springsecurity.service.acl
 
 import javax.persistence.EntityManager
 import javax.persistence.EntityTransaction
+import javax.persistence.Query
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 
@@ -77,7 +78,6 @@ class AclService implements MutableAclService {
 	MutableAcl createAcl(ObjectIdentity objectIdentity) throws AlreadyExistsException {
 		Assert.notNull objectIdentity, 'Object Identity required'
 
-		println "CREATE ACL"
 		// Check this object identity hasn't already been persisted
 		if (retrieveObjectIdentity(objectIdentity)) {
 			throw new AlreadyExistsException("Object identity '$objectIdentity' already exists")
@@ -85,13 +85,11 @@ class AclService implements MutableAclService {
 
 		// Need to retrieve the current principal, in order to know who "owns" this ACL (can be changed later on)
 		PrincipalSid sid = new PrincipalSid(SCH.context.authentication)
-		println "SID:"+ sid
 		
 		// Create the acl_object_identity row
 		createObjectIdentity objectIdentity, sid
 
 		def retval =  readAclById(objectIdentity)
-		println "CREATE ACL RETURNS: "+retval
 		
 		retval
 	}
@@ -108,7 +106,7 @@ class AclService implements MutableAclService {
 
 	protected AclSid createOrRetrieveSid(Sid sid, boolean allowCreate) {
 		Assert.notNull sid, 'Sid required'
-		println "RETRIEVE SID"
+//		println "RETRIEVE SID"
 		
 		String sidName
 		boolean principal
@@ -131,17 +129,17 @@ class AclService implements MutableAclService {
 			aclSid = save(new AclSid(sid: sidName, principal: principal))
 		}
 		
-		println "SID RETURNED: "+aclSid
+//		println "SID RETURNED: "+aclSid
 		return aclSid
 	}
 
 	protected AclClass createOrRetrieveClass(String className, boolean allowCreate) {
-		println "CREATE OR RETRIEVE CLASS"
+//		println "CREATE OR RETRIEVE CLASS"
 		AclClass aclClass = AclClass.findByClassName(className)
 		if (!aclClass && allowCreate) {
 			aclClass = save(new AclClass(className: className))
 		}
-		println "CREATE OR RETRIEVE CLASS RETURNS: "+aclClass
+//		println "CREATE OR RETRIEVE CLASS RETURNS: "+aclClass
 		
 		return aclClass
 	}
@@ -153,7 +151,7 @@ class AclService implements MutableAclService {
 	 */
 	@Transactional
 	void deleteAcl(ObjectIdentity objectIdentity, boolean deleteChildren) throws ChildrenExistException {
-		println "DELETE ACL "+objectIdentity
+//		println "DELETE ACL "+objectIdentity
 		
 		Assert.notNull objectIdentity, 'Object Identity required'
 		Assert.notNull objectIdentity.identifier, "Object Identity doesn't provide an identifier"
@@ -178,9 +176,71 @@ class AclService implements MutableAclService {
 
 	protected void deleteEntries(AclObjectIdentity oid) {
 		println "DELETING ENTRIES FOR "+oid
-		/*AclEntry.executeUpdate(
-				"DELETE FROM AclEntry ae " +
-				"WHERE ae.aclOiId = "+ oid.id, [oid: oid.id])*/
+//		AclEntry.withTransaction{
+//			AclEntry.executeUpdate(
+//				"DELETE FROM AclEntry ae " +
+//				"WHERE ae.aclOiId = "+ oid.id.getId(), [])
+//		}
+		println "TO DELETE "+oid
+		EntityManager em = getEM()
+		EntityTransaction entr
+		try{
+			
+			//get sid to delete
+			def sids = getJpaTemplate().find("SELECT sidId FROM AclEntry ae WHERE ae.aclOiId="+oid.id.getId())
+			println "SIDS TO DELETE: "+commify(sids);
+			
+			def aces = getJpaTemplate().find("SELECT id FROM AclEntry ae WHERE ae.aclOiId="+oid.id.getId())
+			println "ACES TO DELETE: "+commify(aces);
+			
+			
+			aces.each{
+				//aclEntry
+				println "DELETING ACE "+it
+				entr=em.getTransaction();
+				entr.begin();
+				Query query=em.createQuery("DELETE FROM AclEntry ae WHERE ae.id= "+it);
+				//query.setParameter(1, oid.id.getId());
+				println "DELETE FROM AclEntry ae WHERE ae.id= "+it
+				int deleteRecord=query.executeUpdate();
+				entr.commit();
+				System.out.println(deleteRecord+" are deleted.");
+			}
+			
+			//aclObjectIdentity
+			entr=em.getTransaction();
+			entr.begin();
+			Query query=em.createQuery("DELETE FROM AclObjectIdentity oi WHERE oi.objectId= "+oid.id.getId());
+			//query.setParameter(1, oid.id.getId());
+			println "DELETE FROM AclObjectIdentity oi WHERE oi.objectId= "+oid.id.getId()
+			int deleteRecord=query.executeUpdate();
+			entr.commit();
+			System.out.println(deleteRecord+" are deleted.");
+			
+			
+			def delSids = sids
+			println "COMMIFIED "+delSids 
+			delSids.each{
+				//aclSid
+				entr=em.getTransaction();
+				entr.begin();
+				query=em.createQuery("DELETE FROM AclSid s WHERE s.id="+it);
+				//query.setParameter(1, oid.id.getId());
+				println "DELETE FROM AclSid oi WHERE oi.id="+it
+				deleteRecord=query.executeUpdate();
+				entr.commit();
+				System.out.println(deleteRecord+" are deleted.");
+			}
+			
+		}
+		catch(Exception ex){
+			ex.printStackTrace()
+			entr.rollback();
+		}
+		finally{
+			em.close();
+		}
+		
 	}
 
 	/**
@@ -190,7 +250,7 @@ class AclService implements MutableAclService {
 	 */
 	@Transactional
 	MutableAcl updateAcl(MutableAcl acl) throws NotFoundException {
-		println "UPDATE ACL"
+//		println "UPDATE ACL"
 		Assert.notNull acl.id, "Object Identity doesn't provide an identifier"
 
 		// Delete this ACL's ACEs in the acl_entry table
@@ -207,13 +267,13 @@ class AclService implements MutableAclService {
 		clearCacheIncludingChildren acl.objectIdentity
 
 		def retval = readAclById(acl.objectIdentity)
-		println "UPDATE ACL RETURNS: "+retval
+//		println "UPDATE ACL RETURNS: "+retval
 		retval
 	}
 
 	protected void createEntries(MutableAcl acl) {
 		int i = 0
-		println "CREATE ENTRIES"
+//		println "CREATE ENTRIES"
 		def jpa = getJpaTemplate()
 		
 		for (AuditableAccessControlEntry entry in acl.entries) {
@@ -233,7 +293,7 @@ class AclService implements MutableAclService {
 	}
 
 	protected void updateObjectIdentity(MutableAcl acl) {
-		println "UPDATE OBJECT IDENTITY"
+//		println "UPDATE OBJECT IDENTITY"
 		Assert.notNull acl.owner, "Owner is required in this implementation"
 		def jpa = getJpaTemplate()
 		
@@ -259,7 +319,7 @@ class AclService implements MutableAclService {
 	}
 
 	protected void clearCacheIncludingChildren(ObjectIdentity objectIdentity) {
-		println "CLEAR CACHE INCLUDING CHILDREN"
+//		println "CLEAR CACHE INCLUDING CHILDREN"
 		Assert.notNull objectIdentity, 'ObjectIdentity required'
 		for (child in findChildren(objectIdentity)) {
 			clearCacheIncludingChildren child
@@ -273,7 +333,7 @@ class AclService implements MutableAclService {
 	 * 	org.springframework.security.acls.model.ObjectIdentity)
 	 */
 	List<ObjectIdentity> findChildren(ObjectIdentity parent) {
-		println "FIND CHILDREN"
+//		println "FIND CHILDREN"
 		
 		def jpa = getJpaTemplate()
 		
@@ -294,7 +354,7 @@ class AclService implements MutableAclService {
 		}
 		results
 		
-		println "FIND CHILDREN RETURNS: "+results
+//		println "FIND CHILDREN RETURNS: "+results
 	}
 
 	protected Class<?> lookupClass(String className) {
@@ -317,12 +377,12 @@ class AclService implements MutableAclService {
 	 * 	org.springframework.security.acls.model.ObjectIdentity, java.util.List)
 	 */
 	Acl readAclById(ObjectIdentity object, List<Sid> sids) throws NotFoundException {
-		println "READ ACL BY ID"
+//		println "READ ACL BY ID"
 		Map<ObjectIdentity, Acl> map = readAclsById([object], sids)
 		
 		Assert.isTrue map.containsKey(object),
 				"There should have been an Acl entry for ObjectIdentity $object"
-		println "READ ACL BY ID RETURNS: "+map[object]
+//		println "READ ACL BY ID RETURNS: "+map[object]
 		map[object]
 	}
 
@@ -340,7 +400,7 @@ class AclService implements MutableAclService {
 	 * 	java.util.List, java.util.List)
 	 */
 	Map<ObjectIdentity, Acl> readAclsById(List<ObjectIdentity> objects, List<Sid> sids) throws NotFoundException {
-		println "READ ACLS BY ID"
+//		println "READ ACLS BY ID"
 		Map<ObjectIdentity, Acl> result = aclLookupStrategy.readAclsById(objects, sids)
 		// Check every requested object identity was found (throw NotFoundException if needed)
 		for (ObjectIdentity object in objects) {
@@ -349,12 +409,12 @@ class AclService implements MutableAclService {
 						"Unable to find ACL information for object identity '$object'")
 			}
 		}
-		println "READ ACLS BY ID RETURNS: "+result
+//		println "READ ACLS BY ID RETURNS: "+result
 		return result
 	}
 
 	protected AclObjectIdentity retrieveObjectIdentity(ObjectIdentity oid) {
-		println "RETRIEVING ACL OI"
+//		println "RETRIEVING ACL OI"
 		
 		def jpa = getJpaTemplate()
 		
@@ -362,7 +422,7 @@ class AclService implements MutableAclService {
 							  "WHERE objectId = "+oid.identifier+" AND aclClassName = '"+oid.type+"'",
 							  [objectId: oid.identifier])
 							  
-		println "RETRIEVING ACL OI RETURNS: "+aclois
+//		println "RETRIEVING ACL OI RETURNS: "+aclois
 		
 		
 		aclois[0]
@@ -392,7 +452,7 @@ class AclService implements MutableAclService {
 			}
 		}
 		else {*/
-		println "SAVING: "+bean
+//		println "SAVING: "+bean
 		def em = getEM()
 		def tx = null;
 		//em.transaction.begin()
@@ -414,11 +474,20 @@ class AclService implements MutableAclService {
 			em.close();
 		}
 		
-		println "SAVED: "+bean
+//		println "SAVED: "+bean
 		
 		//}
 		
 		bean
+	}
+	
+	def commify(items) {
+        if (!items) return items
+        def sepchar = items.find{ it =~ /,/ } ? '; ' : ', '
+        
+        def ret = items.join(sepchar) + sepchar
+        
+		ret.substring(0, (ret.size() - 2))
 	}
 	
 	private EntityManager getEM(){
